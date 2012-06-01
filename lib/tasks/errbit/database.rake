@@ -19,8 +19,14 @@ namespace :errbit do
 
     desc "Delete resolved errors from the database. (Useful for limited heroku databases)"
     task :clear_resolved => :environment do
-      count = Problem.resolved.count
-      Problem.resolved.each {|problem| problem.destroy }
+      # Wait for problems to have an update for this long before
+      # deleting them
+      min_age = (ENV['MIN_AGE_DAYS'] || 7).to_i
+      from = Time.now - min_age.days
+
+      dbset = Problem.resolved.where(:last_notice_at.lt => from)
+      count = dbset.count
+      dbset.each {|problem| problem.destroy }
       puts "=== Cleared #{count} resolved errors from the database." if count > 0
     end
 
