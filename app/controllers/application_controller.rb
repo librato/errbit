@@ -1,8 +1,16 @@
 class ApplicationController < ActionController::Base
   protect_from_forgery
 
+  before_filter :ensure_ssl
+
   before_filter :authenticate_user!
   before_filter :set_time_zone
+
+  def ensure_ssl
+    if ENV['RAILS_ENV'] == 'production' && request.scheme != 'https'
+      redirect_to "https://#{request.env['HTTP_HOST']}"
+    end
+  end
 
   # Devise override - After login, if there is only one app,
   # redirect to that app's path instead of the root path (apps#index).
